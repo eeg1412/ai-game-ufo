@@ -1,0 +1,17 @@
+{
+  "name": "claw-machine-3d-simulator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build --base=./",
+    "preview": "vite preview --host 127.0.0.1 --base=./"
+  },
+  "dependencies": {
+    "cannon-es": "^0.20.0",
+    "three": "^0.181.2",
+    "vite": "^7.2.4"
+  },
+  "devDependencies": {}
+}
