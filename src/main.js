@@ -58,8 +58,44 @@ const physics = new CANNON.World({
 });
 physics.broadphase = new CANNON.SAPBroadphase(physics);
 physics.defaultContactMaterial.friction = 0.42;
-physics.defaultContactMaterial.restitution = 0.12;
+physics.defaultContactMaterial.restitution = 0.04;
 physics.solver.iterations = 12;
+physics.solver.tolerance = 0.001;
+
+const physicsMaterials = {
+  prize: new CANNON.Material("figure-box"),
+  cabinet: new CANNON.Material("cabinet"),
+  chute: new CANNON.Material("chute"),
+  claw: new CANNON.Material("claw"),
+};
+
+physics.addContactMaterial(
+  new CANNON.ContactMaterial(physicsMaterials.prize, physicsMaterials.prize, {
+    friction: 0.74,
+    restitution: 0.015,
+    contactEquationStiffness: 1e7,
+    contactEquationRelaxation: 7,
+    frictionEquationStiffness: 1e7,
+  }),
+);
+physics.addContactMaterial(
+  new CANNON.ContactMaterial(physicsMaterials.prize, physicsMaterials.cabinet, {
+    friction: 0.82,
+    restitution: 0.01,
+  }),
+);
+physics.addContactMaterial(
+  new CANNON.ContactMaterial(physicsMaterials.prize, physicsMaterials.chute, {
+    friction: 0.36,
+    restitution: 0.01,
+  }),
+);
+physics.addContactMaterial(
+  new CANNON.ContactMaterial(physicsMaterials.prize, physicsMaterials.claw, {
+    friction: 0.18,
+    restitution: 0,
+  }),
+);
 
 const world = new THREE.Group();
 const trolley = new THREE.Group();
@@ -69,7 +105,11 @@ const clawArms = [];
 const clawBodies = [];
 const prizes = [];
 const staticBodies = [];
-const pickupBody = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC });
+const pickupBody = new CANNON.Body({
+  mass: 0,
+  type: CANNON.Body.KINEMATIC,
+  material: physicsMaterials.claw,
+});
 const textureLoader = new THREE.TextureLoader();
 let figureBoxFaceMaterials = null;
 
@@ -305,13 +345,13 @@ function buildPhysicsCabinet() {
   addStaticBox(0.18, 4.2, 5.25, 3.62, 2.25, 0.15);
   addStaticBox(5.42, 1.1, 0.18, 0.9, 0.72, -2.38);
 
-  addStaticBox(1.26, 0.08, 1.34, chute.x, 0.42, -2.05, -0.26, 0, 0);
-  addStaticBox(0.08, 0.28, 1.18, chute.x - 0.68, 0.54, -2.05, -0.26, 0, 0);
-  addStaticBox(0.08, 0.28, 1.18, chute.x + 0.68, 0.54, -2.05, -0.26, 0, 0);
-  addStaticBox(1.42, 0.12, 0.7, chute.x, 0.16, -2.86, -0.08, 0, 0);
-  addStaticBox(1.42, 0.22, 0.1, chute.x, 0.28, -3.19);
-  addStaticBox(0.1, 0.2, 0.68, chute.x - 0.72, 0.28, -2.86);
-  addStaticBox(0.1, 0.2, 0.68, chute.x + 0.72, 0.28, -2.86);
+  addStaticBox(1.26, 0.08, 1.34, chute.x, 0.42, -2.05, -0.26, 0, 0, physicsMaterials.chute);
+  addStaticBox(0.08, 0.28, 1.18, chute.x - 0.68, 0.54, -2.05, -0.26, 0, 0, physicsMaterials.chute);
+  addStaticBox(0.08, 0.28, 1.18, chute.x + 0.68, 0.54, -2.05, -0.26, 0, 0, physicsMaterials.chute);
+  addStaticBox(1.42, 0.12, 0.7, chute.x, 0.16, -2.86, -0.08, 0, 0, physicsMaterials.chute);
+  addStaticBox(1.42, 0.22, 0.1, chute.x, 0.28, -3.19, 0, 0, 0, physicsMaterials.chute);
+  addStaticBox(0.1, 0.2, 0.68, chute.x - 0.72, 0.28, -2.86, 0, 0, 0, physicsMaterials.chute);
+  addStaticBox(0.1, 0.2, 0.68, chute.x + 0.72, 0.28, -2.86, 0, 0, 0, physicsMaterials.chute);
 }
 
 function buildPrizeOutlet() {
@@ -442,7 +482,7 @@ function buildClaw() {
     finger.position.set(0, -0.28, 0.34);
     finger.rotation.x = -0.18;
     finger.userData.openAngle = -0.2;
-    finger.userData.closedAngle = 0.34;
+    finger.userData.closedAngle = 0.2;
 
     arm.add(hingeBase, hingePin, finger);
     clawHead.add(arm);
@@ -535,18 +575,49 @@ function spawnPrizes() {
   activePrize = null;
 
   const colors = [0xef4444, 0x38bdf8, 0xa3e635, 0xf97316, 0xf9a8d4, 0x8b5cf6, 0x14b8a6, 0xfacc15, 0xe2e8f0];
-  for (let i = 0; i < 28; i += 1) {
-    const x = -2.5 + (i % 7) * 0.82 + seededNoise(i) * 0.22;
-    const z = -0.45 + Math.floor(i / 7) * 0.62 + seededNoise(i + 10) * 0.25;
-    const y = 0.72 + Math.floor(i / 7) * 0.12;
+  createPrizePileLayout().forEach((placement, i) => {
     const prize = createPrize(i % 4, colors[i % colors.length], i);
-    prize.mesh.position.set(x, y, z);
-    prize.body.position.set(x, y, z);
-    prize.body.quaternion.setFromEuler(seededNoise(i + 2) * 0.4, seededNoise(i + 5) * Math.PI, seededNoise(i + 7) * 0.4);
+    prize.mesh.position.set(placement.x, placement.y, placement.z);
+    prize.body.position.set(placement.x, placement.y, placement.z);
+    prize.body.quaternion.setFromEuler(placement.rx, placement.ry, placement.rz);
+    prize.mesh.quaternion.set(
+      prize.body.quaternion.x,
+      prize.body.quaternion.y,
+      prize.body.quaternion.z,
+      prize.body.quaternion.w,
+    );
     prizes.push(prize);
     world.add(prize.mesh);
     physics.addBody(prize.body);
-  }
+  });
+}
+
+function createPrizePileLayout() {
+  const rows = [
+    { count: 7, xStart: -2.38, z: -0.54, y: 0.53, spacing: 0.78 },
+    { count: 7, xStart: -2.52, z: 0.1, y: 0.53, spacing: 0.78 },
+    { count: 6, xStart: -2.08, z: 0.74, y: 0.54, spacing: 0.82 },
+    { count: 5, xStart: -1.65, z: 1.36, y: 0.54, spacing: 0.83 },
+    { count: 3, xStart: -0.82, z: 0.42, y: 0.76, spacing: 0.82 },
+  ];
+  const layout = [];
+  rows.forEach((row, rowIndex) => {
+    for (let col = 0; col < row.count; col += 1) {
+      const seed = rowIndex * 31 + col * 7;
+      const x = row.xStart + col * row.spacing + seededNoise(seed) * 0.06;
+      const z = row.z + seededNoise(seed + 2) * 0.08;
+      const isTopLayer = row.y > 0.8;
+      layout.push({
+        x,
+        y: row.y + seededNoise(seed + 4) * (isTopLayer ? 0.025 : 0.012),
+        z,
+        rx: seededNoise(seed + 8) * (isTopLayer ? 0.14 : 0.055),
+        ry: seededNoise(seed + 11) * 0.34,
+        rz: seededNoise(seed + 14) * (isTopLayer ? 0.18 : 0.08),
+      });
+    }
+  });
+  return layout;
 }
 
 function createPrize(type, color, seed) {
@@ -613,14 +684,19 @@ function createPrize(type, color, seed) {
   const body = new CANNON.Body({
     mass: 0.82 + pseudoRandom(seed + 13) * 0.38,
     position: new CANNON.Vec3(0, 1, 0),
-    shape: new CANNON.Box(new CANNON.Vec3(width / 2, height / 2, depth / 2)),
+    material: physicsMaterials.prize,
     linearDamping: 0.35,
     angularDamping: 0.45,
     allowSleep: true,
     sleepSpeedLimit: 0.08,
     sleepTimeLimit: 0.7,
   });
-  body.userData = { caught: false };
+  body.addShape(new CANNON.Box(new CANNON.Vec3(width / 2, height / 2, depth / 2)));
+  body.addShape(
+    new CANNON.Box(new CANNON.Vec3((width * 0.58) / 2, 0.04, (depth * 0.74) / 2)),
+    new CANNON.Vec3(0, height / 2 + 0.04, 0),
+  );
+  body.userData = { caught: false, originalMass: body.mass };
   return { mesh: group, body, radius: 0.34 };
 }
 
@@ -1286,7 +1362,7 @@ function updateStateMachine(delta) {
       if (activePrize) {
         releaseActivePrize(false);
         activePrize.body.velocity.set(0, -1.35, -0.55);
-        activePrize.body.angularVelocity.set(0.8, 1.1, 0.4);
+        activePrize.body.angularVelocity.set(0.16, 0.22, 0.08);
         setState("releasing", "释放奖品");
       } else {
         setState("releasing", "空爪释放");
@@ -1403,8 +1479,12 @@ function releaseActivePrize(clearReference = true) {
   if (activePrize) {
     activePrize.body.collisionResponse = true;
     activePrize.body.userData.carrying = false;
+    activePrize.body.type = CANNON.Body.DYNAMIC;
+    activePrize.body.mass = activePrize.body.userData.originalMass ?? 1;
+    activePrize.body.updateMassProperties();
     activePrize.body.linearDamping = 0.35;
     activePrize.body.angularDamping = 0.45;
+    activePrize.body.wakeUp();
   }
   if (clearReference) activePrize = null;
 }
@@ -1413,43 +1493,32 @@ function prepareActivePrizeForCarry(prize) {
   prize.body.wakeUp();
   prize.body.collisionResponse = false;
   prize.body.userData.carrying = true;
+  prize.body.userData.originalMass = prize.body.userData.originalMass ?? prize.body.mass;
   prize.body.userData.carryQuaternion = new CANNON.Quaternion(
     prize.body.quaternion.x,
     prize.body.quaternion.y,
     prize.body.quaternion.z,
     prize.body.quaternion.w,
   );
+  prize.body.userData.carryYOffset = clamp(
+    prize.body.position.y - pickupBody.position.y,
+    -0.72,
+    -0.56,
+  );
+  prize.body.type = CANNON.Body.KINEMATIC;
+  prize.body.mass = 0;
+  prize.body.updateMassProperties();
   prize.body.linearDamping = 0.86;
   prize.body.angularDamping = 0.98;
-  clampVec3Length(prize.body.velocity, 0.22);
+  prize.body.velocity.set(0, 0, 0);
   prize.body.angularVelocity.set(0, 0, 0);
 }
 
 function applyCarryForces(delta) {
   if (!activePrize || state === "releasing") return;
 
-  const strength = Number(strengthInput.value) / 100;
   const target = getCarryTarget();
-  const toTarget = target.vsub(activePrize.body.position);
-  const distance = toTarget.length();
-  const stiffness = 34 + strength * 46;
-  const damping = 18 + strength * 20;
-  const force = toTarget.scale(stiffness).vsub(activePrize.body.velocity.scale(damping));
-  const maxForce = 58 + strength * 112;
-
-  if (force.length() > maxForce) {
-    force.normalize();
-    force.scale(maxForce, force);
-  }
-
-  activePrize.body.applyForce(force, activePrize.body.position);
-  dampCarriedPrize(activePrize.body);
-
-  if (distance < 0.08) {
-    activePrize.body.velocity.scale(0.78, activePrize.body.velocity);
-    activePrize.body.angularVelocity.scale(0.66, activePrize.body.angularVelocity);
-  }
-
+  setCarriedPrizePose(activePrize.body, target, state === "grabbing" ? 0.52 : 0.78, delta, 1.65);
 }
 
 function stabilizeCarriedPrize(delta) {
@@ -1459,17 +1528,20 @@ function stabilizeCarriedPrize(delta) {
   const target = getCarryTarget();
   const offset = target.vsub(body.position);
   const distance = offset.length();
-  const follow = distance > 0.24 ? 0.82 : 0.46;
+  setCarriedPrizePose(body, target, distance > 0.12 ? 0.9 : 0.62, delta, 1.15);
+}
 
+function setCarriedPrizePose(body, target, follow, delta, maxSpeed) {
+  const previous = body.position.clone();
   body.position.x = lerp(body.position.x, target.x, follow);
   body.position.y = lerp(body.position.y, target.y, follow);
   body.position.z = lerp(body.position.z, target.z, follow);
   body.velocity.set(
-    offset.x / Math.max(delta, 1 / 120),
-    offset.y / Math.max(delta, 1 / 120),
-    offset.z / Math.max(delta, 1 / 120),
+    (body.position.x - previous.x) / Math.max(delta, 1 / 120),
+    (body.position.y - previous.y) / Math.max(delta, 1 / 120),
+    (body.position.z - previous.z) / Math.max(delta, 1 / 120),
   );
-  clampVec3Length(body.velocity, 0.9);
+  clampVec3Length(body.velocity, maxSpeed);
 
   const carryQuaternion = body.userData.carryQuaternion;
   if (carryQuaternion) body.quaternion.copy(carryQuaternion);
@@ -1477,9 +1549,10 @@ function stabilizeCarriedPrize(delta) {
 }
 
 function getCarryTarget() {
+  const yOffset = activePrize?.body.userData.carryYOffset ?? -0.66;
   return new CANNON.Vec3(
     pickupBody.position.x,
-    pickupBody.position.y - 0.12,
+    pickupBody.position.y + yOffset,
     pickupBody.position.z,
   );
 }
@@ -1492,7 +1565,8 @@ function syncClawBodies(delta) {
 
   clawBodies.forEach((body, index) => {
     const angle = (index / 3) * Math.PI * 2 + clawHead.rotation.y;
-    const close = state === "grabbing" || state === "lifting" || state === "returning" ? 0.2 : 0.54;
+    const isClosed = state === "grabbing" || state === "lifting" || state === "returning";
+    const close = isClosed ? (activePrize ? 0.36 : 0.3) : 0.54;
     const y = headWorld.y - 0.9;
     moveKinematicBody(
       body,
@@ -1580,7 +1654,12 @@ function updateClawVisual(delta) {
   cable.scale.y = Math.max(0.25, length);
   cable.position.y = -length / 2;
 
-  const closeAmount = state === "grabbing" || state === "lifting" || state === "returning" ? 1 : 0;
+  const closeAmount =
+    state === "grabbing" || state === "lifting" || state === "returning"
+      ? activePrize
+        ? 0.72
+        : 0.92
+      : 0;
   clawArms.forEach((arm, index) => {
     const finger = arm.getObjectByName("finger");
     if (finger) {
@@ -1617,11 +1696,12 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-function addStaticBox(width, height, depth, x, y, z, rotationX = 0, rotationY = 0, rotationZ = 0) {
+function addStaticBox(width, height, depth, x, y, z, rotationX = 0, rotationY = 0, rotationZ = 0, material = physicsMaterials.cabinet) {
   const body = new CANNON.Body({
     mass: 0,
     shape: new CANNON.Box(new CANNON.Vec3(width / 2, height / 2, depth / 2)),
     position: new CANNON.Vec3(x, y, z),
+    material,
   });
   body.quaternion.setFromEuler(rotationX, rotationY, rotationZ);
   staticBodies.push(body);
