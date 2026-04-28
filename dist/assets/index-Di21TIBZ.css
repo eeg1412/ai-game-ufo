@@ -1,0 +1,485 @@
+:root {
+  color-scheme: light;
+  font-family:
+    Inter, "Segoe UI", "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+  --panel: rgba(255, 246, 232, 0.34);
+  --panel-line: rgba(104, 68, 58, 0.18);
+  --text: #f8fafc;
+  --hud-text: #2a1c21;
+  --hud-muted: rgba(42, 28, 33, 0.72);
+  --muted: #b7c4d8;
+  --accent: #ffcf3f;
+  --accent-strong: #ff8a1c;
+  --ok: #4ade80;
+  --danger: #fb7185;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #fff3e7;
+  overscroll-behavior: none;
+}
+
+body {
+  color: var(--text);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.hud {
+  position: fixed;
+  z-index: 5;
+  border: 1px solid var(--panel-line);
+  background: var(--panel);
+  color: var(--hud-text);
+  box-shadow: 0 10px 26px rgba(82, 47, 32, 0.12);
+}
+
+.top-left {
+  top: 12px;
+  left: 12px;
+  width: min(252px, calc(100vw - 24px));
+  padding: 9px 11px;
+}
+
+.top-right {
+  top: 12px;
+  right: 12px;
+  width: min(236px, calc(100vw - 24px));
+  padding: 8px 10px;
+}
+
+.machine-title {
+  margin-bottom: 6px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.status-row,
+.switch-row,
+.meter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 22px;
+  color: var(--hud-muted);
+  font-size: 12px;
+}
+
+.status-grid {
+  display: grid;
+  gap: 2px;
+}
+
+.status-row strong {
+  color: var(--hud-text);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.status-row.wide strong {
+  max-width: 132px;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.meter {
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.meter input {
+  width: 92px;
+  accent-color: var(--accent);
+}
+
+.meter strong {
+  min-width: 36px;
+  color: var(--accent);
+  text-align: right;
+  font-size: 12px;
+}
+
+.switch-row {
+  padding: 2px 0 6px;
+}
+
+.switch-row input {
+  width: 34px;
+  height: 18px;
+  accent-color: var(--ok);
+}
+
+.ghost-button,
+.drop-button,
+.dpad button {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ghost-button {
+  width: 100%;
+  min-height: 30px;
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--hud-text);
+  font-size: 12px;
+}
+
+.controls {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 138px 150px;
+  gap: 14px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 44px);
+  gap: 3px;
+}
+
+.dpad button {
+  width: 44px;
+  height: 44px;
+  background: rgba(12, 20, 35, 0.82);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+#forward {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+#left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+#right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+#back {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.drop-button {
+  width: 150px;
+  height: 102px;
+  border-color: rgba(255, 207, 63, 0.62);
+  background: linear-gradient(180deg, #ffd84d 0%, #ff8a1c 100%);
+  color: #231200;
+  font-weight: 900;
+  box-shadow: 0 14px 38px rgba(255, 138, 28, 0.26);
+}
+
+.controls button {
+  pointer-events: auto;
+}
+
+.drop-button:disabled,
+.dpad button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.55) brightness(0.85);
+  opacity: 0.42;
+}
+
+.ghost-button:hover,
+.drop-button:hover,
+.dpad button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+.ghost-button:active,
+.drop-button:active,
+.dpad button:active {
+  transform: translateY(1px);
+}
+
+.keyboard-hint {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 5;
+  max-width: calc(100vw - 360px);
+  color: rgba(248, 250, 252, 0.68);
+  font-size: 13px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 760px) {
+  .hud {
+    border-radius: 0;
+    box-shadow: 0 8px 18px rgba(82, 47, 32, 0.1);
+  }
+
+  .top-left,
+  .top-right {
+    left: max(10px, env(safe-area-inset-left));
+    right: max(10px, env(safe-area-inset-right));
+    width: auto;
+  }
+
+  .top-left {
+    top: max(8px, env(safe-area-inset-top));
+    padding: 7px 9px;
+  }
+
+  .top-right {
+    top: calc(max(8px, env(safe-area-inset-top)) + 56px);
+    bottom: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 7px;
+    align-items: center;
+    padding: 6px 8px;
+    background: rgba(255, 246, 232, 0.3);
+  }
+
+  .machine-title {
+    margin-bottom: 4px;
+    font-size: 14px;
+    line-height: 1.1;
+  }
+
+  .status-grid {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-row {
+    min-height: 19px;
+    gap: 5px;
+    font-size: 11px;
+  }
+
+  .status-row strong {
+    font-size: 14px;
+  }
+
+  .status-row.wide {
+    min-width: 0;
+    justify-content: flex-end;
+  }
+
+  .status-row.wide strong {
+    max-width: 86px;
+    font-size: 11px;
+  }
+
+  .meter {
+    min-height: 28px;
+    margin-bottom: 0;
+    gap: 6px;
+  }
+
+  .meter span,
+  .switch-row span {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .meter input {
+    width: min(30vw, 120px);
+    min-width: 72px;
+  }
+
+  .meter strong {
+    min-width: 34px;
+    font-size: 12px;
+  }
+
+  .switch-row {
+    min-height: 28px;
+    padding: 0;
+    gap: 5px;
+  }
+
+  .switch-row input {
+    width: 38px;
+    height: 22px;
+  }
+
+  .ghost-button {
+    width: 50px;
+    min-height: 30px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+
+  .controls {
+    right: max(10px, env(safe-area-inset-right));
+    left: auto;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: 172px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    align-items: center;
+    justify-items: center;
+    padding: 10px;
+    border: 0;
+    background: transparent;
+  }
+
+  .dpad {
+    grid-template-columns: repeat(3, 50px);
+    grid-template-rows: repeat(3, 50px);
+    gap: 4px;
+  }
+
+  .dpad button {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(12, 20, 35, 0.42);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+  }
+
+  .drop-button {
+    width: 150px;
+    height: 58px;
+    min-width: 0;
+    font-size: 18px;
+    background: linear-gradient(180deg, rgba(255, 216, 77, 0.72) 0%, rgba(255, 138, 28, 0.7) 100%);
+    box-shadow: 0 10px 24px rgba(255, 138, 28, 0.16);
+  }
+
+  .keyboard-hint {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .machine-title {
+    font-size: 13px;
+  }
+
+  .top-left {
+    padding: 6px 8px;
+  }
+
+  .top-right {
+    top: calc(max(8px, env(safe-area-inset-top)) + 50px);
+    grid-template-columns: 1fr auto;
+    padding: 6px;
+  }
+
+  .top-right .meter {
+    grid-column: 1 / -1;
+  }
+
+  .status-grid {
+    grid-template-columns: auto auto minmax(76px, 1fr);
+    gap: 6px;
+  }
+
+  .status-row {
+    font-size: 11px;
+  }
+
+  .status-row strong {
+    font-size: 13px;
+  }
+
+  .status-row.wide strong {
+    max-width: 78px;
+    font-size: 11px;
+  }
+
+  .controls {
+    width: 162px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .dpad {
+    grid-template-columns: repeat(3, 46px);
+    grid-template-rows: repeat(3, 46px);
+    gap: 5px;
+  }
+
+  .dpad button {
+    width: 46px;
+    height: 46px;
+  }
+
+  .drop-button {
+    width: 146px;
+    height: 54px;
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 360px) {
+  .top-right {
+    top: calc(max(8px, env(safe-area-inset-top)) + 48px);
+  }
+
+  .controls {
+    width: 146px;
+  }
+
+  .dpad {
+    grid-template-columns: repeat(3, 40px);
+    grid-template-rows: repeat(3, 40px);
+    gap: 4px;
+  }
+
+  .dpad button {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .drop-button {
+    width: 130px;
+    height: 50px;
+  }
+}

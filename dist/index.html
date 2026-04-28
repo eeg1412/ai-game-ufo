@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>3D 抓娃娃机模拟器</title>
+    <script type="module" crossorigin src="./assets/index-BrIdle7Q.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Di21TIBZ.css">
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene" aria-label="3D 抓娃娃机模拟器"></canvas>
+
+      <section class="hud top-left" aria-label="游戏状态">
+        <div class="machine-title">3D 抓娃娃机</div>
+        <div class="status-grid">
+          <div class="status-row">
+            <span>得分</span>
+            <strong id="score">0</strong>
+          </div>
+          <div class="status-row">
+            <span>次数</span>
+            <strong id="plays">8</strong>
+          </div>
+          <div class="status-row wide">
+            <span>状态</span>
+            <strong id="status">移动爪子</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="hud top-right" aria-label="机器设置">
+        <label class="meter">
+          <span>抓力</span>
+          <input id="strength" type="range" min="30" max="95" value="68" />
+          <strong id="strengthValue">68%</strong>
+        </label>
+        <label class="switch-row">
+          <span>自动镜头</span>
+          <input id="cameraFollow" type="checkbox" checked />
+        </label>
+        <button id="reset" type="button" class="ghost-button">重置</button>
+      </section>
+
+      <section class="controls" aria-label="操作">
+        <div class="dpad" aria-label="方向控制">
+          <button id="forward" type="button" aria-label="向前">▲</button>
+          <button id="left" type="button" aria-label="向左">◀</button>
+          <button id="right" type="button" aria-label="向右">▶</button>
+          <button id="back" type="button" aria-label="向后">▼</button>
+        </div>
+        <button id="drop" type="button" class="drop-button">抓取</button>
+      </section>
+
+      <div class="keyboard-hint">WASD / 方向键移动 · Space 抓取 · R 重置</div>
+    </div>
+  </body>
+</html>
