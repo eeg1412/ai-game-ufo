@@ -1,16 +1,16 @@
 ﻿import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import "./styles.css";
-import boxBackUrl from "./assets/figure-box/back.jpg";
-import boxBottomUrl from "./assets/figure-box/bottom.jpg";
-import boxFrontUrl from "./assets/figure-box/front.jpg";
-import boxLeftUrl from "./assets/figure-box/left.jpg";
-import boxRightUrl from "./assets/figure-box/right.jpg";
-import boxTopUrl from "./assets/figure-box/top.jpg";
-import cabinetPanelUrl from "./assets/kawaii-textures/cabinet-panel.png";
-import cushionFloorUrl from "./assets/kawaii-textures/cushion-floor.png";
-import giftWrapUrl from "./assets/kawaii-textures/gift-wrap.png";
-import mintMetalUrl from "./assets/kawaii-textures/mint-metal.png";
+import boxBackUrl from "./assets/figure-box/back.webp";
+import boxBottomUrl from "./assets/figure-box/bottom.webp";
+import boxFrontUrl from "./assets/figure-box/front.webp";
+import boxLeftUrl from "./assets/figure-box/left.webp";
+import boxRightUrl from "./assets/figure-box/right.webp";
+import boxTopUrl from "./assets/figure-box/top.webp";
+import cabinetPanelUrl from "./assets/kawaii-textures/cabinet-panel.webp";
+import cushionFloorUrl from "./assets/kawaii-textures/cushion-floor.webp";
+import giftWrapUrl from "./assets/kawaii-textures/gift-wrap.webp";
+import mintMetalUrl from "./assets/kawaii-textures/mint-metal.webp";
 
 const canvas = document.querySelector("#scene");
 const scoreEl = document.querySelector("#score");
@@ -50,7 +50,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.18;
+renderer.toneMappingExposure = 1.08;
 
 const physics = new CANNON.World({
   gravity: new CANNON.Vec3(0, -9.82, 0),
@@ -134,7 +134,7 @@ const materials = {
 };
 
 const glowMaterials = {
-  tube: new THREE.MeshBasicMaterial({ color: 0xfff6c8 }),
+  tube: new THREE.MeshBasicMaterial({ color: 0xffffdf }),
   panel: new THREE.MeshBasicMaterial({
     color: 0xfff0c4,
     transparent: true,
@@ -268,47 +268,33 @@ function buildCabinet() {
 }
 
 function buildCabinetLighting() {
-  world.add(
-    topLightStrip(5.85, 0, 4.72, -1.45),
-    topLightStrip(5.85, 0, 4.72, 0.12),
-    topLightStrip(5.85, 0, 4.72, 1.68),
-  );
+  world.add(ceilingGlowPanel(0, 4.72, 0.15));
 }
 
-function topLightStrip(length, x, y, z) {
+function ceilingGlowPanel(x, y, z) {
   const group = new THREE.Group();
   group.position.set(x, y, z);
 
-  const housing = new THREE.Mesh(new THREE.BoxGeometry(length + 0.34, 0.12, 0.24), lampMaterials.housing);
-  housing.position.y = 0.045;
+  const housing = new THREE.Mesh(new THREE.BoxGeometry(6.45, 0.12, 4.45), lampMaterials.housing);
+  housing.position.y = 0.055;
   housing.castShadow = true;
   housing.receiveShadow = true;
 
-  const diffuser = new THREE.Mesh(new THREE.BoxGeometry(length, 0.035, 0.13), lampMaterials.diffuser);
-  diffuser.position.y = -0.045;
+  const diffuser = new THREE.Mesh(new THREE.BoxGeometry(6.12, 0.04, 4.08), lampMaterials.diffuser);
+  diffuser.position.y = -0.035;
 
-  const tube = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.035, 0.035, length, 18),
-    glowMaterials.tube,
+  const glowPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(6.05, 4.0),
+    glowMaterials.panel,
   );
-  tube.rotation.z = Math.PI / 2;
-  tube.position.y = -0.07;
+  glowPlane.rotation.x = -Math.PI / 2;
+  glowPlane.position.y = -0.06;
 
-  const leftCap = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.045, 14), lampMaterials.socket);
-  leftCap.rotation.z = Math.PI / 2;
-  leftCap.position.set(-length / 2 - 0.025, -0.07, 0);
+  const light = new THREE.RectAreaLight(0xffffd8, 6.2, 6.05, 4.0);
+  light.position.set(0, -0.09, 0);
+  light.rotation.x = -Math.PI / 2;
 
-  const rightCap = leftCap.clone();
-  rightCap.position.x = length / 2 + 0.025;
-
-  [-length * 0.34, 0, length * 0.34].forEach((lightX) => {
-    const light = new THREE.PointLight(0xffefc2, 2.35, 4.7, 1.55);
-    light.position.set(lightX, -0.16, 0);
-    light.castShadow = false;
-    group.add(light);
-  });
-
-  group.add(housing, diffuser, tube, leftCap, rightCap);
+  group.add(housing, diffuser, glowPlane, light);
   return group;
 }
 
